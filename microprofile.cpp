@@ -7555,8 +7555,29 @@ int MicroProfileGetGpuTickReference(int64_t* pOutCPU, int64_t* pOutGpu)
 	return 1;
 }
 #elif MICROPROFILE_GPU_TIMERS_GL
+#include <GL/glcorearb.h>
+
+static PFNGLGENQUERIESPROC			glGenQueries = 0;
+static PFNGLDELETEQUERIESPROC		glDeleteQueries = 0;
+static PFNGLQUERYCOUNTERPROC		glQueryCounter = 0;
+static PFNGLGETQUERYOBJECTUI64VPROC	glGetQueryObjectui64v = 0;
+static PFNGLGETINTEGER64VPROC		glGetInteger64v = 0;
+
 void MicroProfileGpuInitGL()
 {
+	// note: nvidia-style defines
+	#if !defined( MP_INIT_ENTRY_POINT )
+	#define MP_INIT_ENTRY_POINT( FUNCTYPE, FUNCNAME ) FUNCNAME = reinterpret_cast<FUNCTYPE>( wglGetProcAddress( #FUNCNAME ) ); \
+		if(!FUNCNAME) printf( "# warn \"%s\" not initialized\n", (#FUNCNAME) );
+	#endif //INIT_ENTRY_POINT
+
+	MP_INIT_ENTRY_POINT( PFNGLGENQUERIESPROC, glGenQueries );
+	MP_INIT_ENTRY_POINT( PFNGLDELETEQUERIESPROC, glDeleteQueries );
+	MP_INIT_ENTRY_POINT( PFNGLQUERYCOUNTERPROC, glQueryCounter );
+	MP_INIT_ENTRY_POINT( PFNGLGETQUERYOBJECTUI64VPROC, glGetQueryObjectui64v );
+	MP_INIT_ENTRY_POINT( PFNGLGETINTEGER64VPROC, glGetInteger64v );
+	#undef MP_INIT_ENTRY_POINT
+
 	S.pGPU = MP_ALLOC_OBJECT(MicroProfileGpuTimerState);
 	S.pGPU->GLTimerPos = 0;
 	glGenQueries(MICROPROFILE_GL_MAX_QUERIES, &S.pGPU->GLTimers[0]);		
