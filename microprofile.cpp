@@ -463,7 +463,7 @@ struct MicroProfileGpuTimerState
 
 	MicroProfileD3D11Frame m_QueryFrames[MICROPROFILE_GPU_FRAME_DELAY];
 };
-#elif defined(MICROPROFILE_GPU_TIMERS_D3D12)
+#elif MICROPROFILE_GPU_TIMERS_D3D12
 #include <d3d12.h>
 
 #ifndef MICROPROFILE_D3D_MAX_QUERIES
