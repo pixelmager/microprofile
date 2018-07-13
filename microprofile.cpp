@@ -2526,7 +2526,7 @@ void MicroProfileFlip(void* pContext)
 							{
 								int nTimer = MicroProfileLogGetTimerIndex(LE);
 								MP_ASSERT(nTimer>=0);
-								MP_ASSERT(nTimer < S.nTotalTimers);
+								MP_ASSERT(nTimer < (int)S.nTotalTimers);
 								uint32_t nGroup = pTimerToGroup[nTimer];
 								MP_ASSERT(nStackPos < MICROPROFILE_STACK_MAX);
 								MP_ASSERT(nGroup < MICROPROFILE_MAX_GROUPS);
@@ -2539,7 +2539,7 @@ void MicroProfileFlip(void* pContext)
 							else if(MP_LOG_LEAVE == nType)
 							{
 								int nTimer = MicroProfileLogGetTimerIndex(LE);
-								MP_ASSERT(nTimer < S.nTotalTimers);
+								MP_ASSERT(nTimer < (int)S.nTotalTimers);
 								MP_ASSERT(nTimer >= 0);
 								uint32_t nGroup = pTimerToGroup[nTimer];
 								MP_ASSERT(nGroup < MICROPROFILE_MAX_GROUPS);
@@ -6311,7 +6311,9 @@ void MicroProfileWin32ExtractModules(MicroProfileWin32ThreadInfo::Process& P)
 void MicroProfileWin32InitThreadInfo2()
 {
 	memset(&g_ThreadInfo, 0, sizeof(g_ThreadInfo));
+	#if MICROPROFILE_DEBUG
 	float fToMsCpu = MicroProfileTickToMsMultiplier(MicroProfileTicksPerSecondCpu());
+	#endif
 
 	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
 	PROCESSENTRY32 pe32;
@@ -6319,7 +6321,10 @@ void MicroProfileWin32InitThreadInfo2()
 	te32.dwSize = sizeof(THREADENTRY32);
 	pe32.dwSize = sizeof(PROCESSENTRY32);
 	{
+		#if MICROPROFILE_DEBUG
 		int64_t nTickStart = MP_TICK();
+		#endif
+
 		if (Process32First(hSnap, &pe32))
 		{
 			do
@@ -6338,10 +6343,12 @@ void MicroProfileWin32InitThreadInfo2()
 #endif
 	}
 	{
+		#if MICROPROFILE_DEBUG
 		int64_t nTickStart = MP_TICK();
+		#endif
 		for (uint32_t i = 0; i < g_ThreadInfo.nNumProcesses; ++i)
 		{
-			uint32_t pid = g_ThreadInfo.P[i].pid;
+			//uint32_t pid = g_ThreadInfo.P[i].pid;
 			g_ThreadInfo.P[i].nModuleStart = g_ThreadInfo.nNumModules;
 			g_ThreadInfo.P[i].nNumModules = 0;
 			MicroProfileWin32ExtractModules(g_ThreadInfo.P[i]);
@@ -6359,11 +6366,13 @@ void MicroProfileWin32InitThreadInfo2()
 	ULONG olen;
 	uint32_t nThreadsTested = 0;
 	uint32_t nThreadsSucceeded = 0;
-	uint32_t nThreadsSucceeded2 = 0;
+	//uint32_t nThreadsSucceeded2 = 0;
 
 	if (Thread32First(hSnap, &te32))
 	{
+		#if MICROPROFILE_DEBUG
 		int64_t nTickStart = MP_TICK();
+		#endif
 		do
 		{
 			nThreadsTested++;
@@ -6375,8 +6384,8 @@ void MicroProfileWin32InitThreadInfo2()
 				NTSTATUS ntStatus = NtQueryInformationThread(hThread, (THREADINFOCLASS)ThreadQuerySetWin32StartAddress, &dwStartAddress, sizeof(dwStartAddress), &olen);
 				if (0 == ntStatus)
 				{
-					bool bFound = false;
-					uint32_t nProcessIndex = (uint32_t)-1;					
+					//bool bFound = false;
+					uint32_t nProcessIndex = (uint32_t)-1;
 					for (uint32_t i = 0; i < g_ThreadInfo.nNumProcesses; ++i)
 					{
 						if (g_ThreadInfo.P[i].pid == te32.th32OwnerProcessID)
